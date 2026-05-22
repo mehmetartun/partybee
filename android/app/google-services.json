@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "610399892075",
+    "project_id": "party-bee-30d70",
+    "storage_bucket": "party-bee-30d70.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:610399892075:android:b5500588bbbedb3a89772e",
+        "android_client_info": {
+          "package_name": "com.artun.partybee"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHTyHMqBASIMKkGKnBjF1iUAk9bb3Gs_g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
