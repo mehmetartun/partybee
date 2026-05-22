@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:go_router/go_router.dart';
 import '../theme.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,9 +20,70 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleAuthSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      _googleAuthSubscription = GoogleSignIn.instance.authenticationEvents.listen(
+        (GoogleSignInAuthenticationEvent event) async {
+          if (event is GoogleSignInAuthenticationEventSignIn) {
+            final account = event.user;
+            setState(() => _isLoading = true);
+            try {
+              final googleAuth = account.authentication;
+              final OAuthCredential credential = GoogleAuthProvider.credential(
+                idToken: googleAuth.idToken,
+              );
+              await FirebaseAuth.instance.signInWithCredential(credential);
+            } on FirebaseAuthException catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.message ?? 'Firebase Sign-in failed.'),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Google Sign-in failed: ${e.toString()}'),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                );
+              }
+            } finally {
+              if (mounted) setState(() => _isLoading = false);
+            }
+          }
+        },
+        onError: (error) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Google Sign-in failed: ${error.toString()}'),
+                backgroundColor: Colors.redAccent,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            );
+            setState(() => _isLoading = false);
+          }
+        },
+      );
+    }
+  }
 
   @override
   void dispose() {
+    _googleAuthSubscription?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -242,20 +306,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 24),
                   
                   // Google Sign-In Button
-                  OutlinedButton(
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.network(
-                          'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
-                          height: 20,
-                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata_rounded, size: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text('Sign In with Google'),
-                      ],
-                    ),
+                  buildGoogleSignInButton(
+                    onPressed: _signInWithGoogle,
+                    isLoading: _isLoading,
                   ),
                   const SizedBox(height: 32),
                   
