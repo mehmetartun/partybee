@@ -23,15 +23,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -65,5 +59,14 @@ class DefaultFirebaseOptions {
     messagingSenderId: '610399892075',
     projectId: 'party-bee-30d70',
     storageBucket: 'party-bee-30d70.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyBHTyHMqBASIMKkGKnBjF1iUAk9bb3Gs_g',
+    appId: '1:610399892075:ios:b5500588bbbedb3a89772e',
+    messagingSenderId: '610399892075',
+    projectId: 'party-bee-30d70',
+    storageBucket: 'party-bee-30d70.firebasestorage.app',
+    iosBundleId: 'com.example.partybee',
   );
 }

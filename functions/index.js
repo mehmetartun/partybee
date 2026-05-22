@@ -7,9 +7,14 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
+const { setGlobalOptions } = require("firebase-functions");
+const { onRequest } = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
+const { initializeApp } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
+
+initializeApp();
+const db = getFirestore();
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -26,7 +31,17 @@ setGlobalOptions({ maxInstances: 10 });
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+exports.helloworld = onRequest((request, response) => {
+    response.send("Hello World");
+});
+
+exports.writeTest = onRequest(async (request, response) => {
+    try {
+        const docRef = await db.collection("test").add({ name: "test" });
+        response.send(`Document written with ID: ${docRef.id}`);
+    } catch (error) {
+        logger.error("Error writing to Firestore:", error);
+        response.status(500).send(`Error: ${error.message}`);
+    }
+});
+

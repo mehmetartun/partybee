@@ -12,7 +12,20 @@
           "package_name": "com.artun.partybee"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "610399892075-9ubdgtd0kml3oi729s220rutnacribo5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.artun.partybee",
+            "certificate_hash": "50537036a64a27f1cf73fcaf0eeebb08a8e7efb0"
+          }
+        },
+        {
+          "client_id": "610399892075-egd7k8s116ole5lddcc08etj7e6jlb6a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBHTyHMqBASIMKkGKnBjF1iUAk9bb3Gs_g"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "610399892075-egd7k8s116ole5lddcc08etj7e6jlb6a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

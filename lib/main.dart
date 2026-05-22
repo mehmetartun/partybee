@@ -1,122 +1,124 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'firebase_options.dart';
+import 'theme.dart';
+import 'auth_notifier.dart';
+import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/verify_email_screen.dart';
+import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await GoogleSignIn.instance.initialize();
+
+  // if (kDebugMode) {
+  //   final host = defaultTargetPlatform == TargetPlatform.android ? '10.0.2.2' : 'localhost';
+  //   FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+  // }
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final AuthNotifier _authNotifier = AuthNotifier();
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Set up GoRouter with AuthNotifier serving as the refreshListenable
+    _router = GoRouter(
+      refreshListenable: _authNotifier,
+      initialLocation: '/',
+      routes: [
+        GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: '/signup',
+          builder: (context, state) => const SignupScreen(),
+        ),
+        GoRoute(
+          path: '/forgot-password',
+          builder: (context, state) => const ForgotPasswordScreen(),
+        ),
+        GoRoute(
+          path: '/verify-email',
+          builder: (context, state) => const VerifyEmailScreen(),
+        ),
+      ],
+      redirect: (context, state) {
+        final isAuthenticated = _authNotifier.isAuthenticated;
+        final isEmailVerified = _authNotifier.isEmailVerified;
+        final isGoingToLogin = state.matchedLocation == '/login';
+        final isGoingToSignup = state.matchedLocation == '/signup';
+        final isGoingToForgot = state.matchedLocation == '/forgot-password';
+        final isGoingToVerify = state.matchedLocation == '/verify-email';
+
+        // 1. Not Authenticated
+        if (!isAuthenticated) {
+          // Allow routing only to login, signup, or forgot-password
+          if (isGoingToLogin || isGoingToSignup || isGoingToForgot) {
+            return null;
+          }
+          return '/login';
+        }
+
+        // 2. Authenticated but email not verified
+        final user = _authNotifier.user;
+        final isGoogleUser =
+            user?.providerData.any((p) => p.providerId == 'google.com') ??
+            false;
+
+        // Google accounts are pre-verified. Email-password accounts require verification check.
+        if (!isEmailVerified && !isGoogleUser) {
+          if (isGoingToVerify) return null;
+          return '/verify-email';
+        }
+
+        // 3. Authenticated and Verified (or Google user)
+        // Prevent going to auth screens if already logged in and verified
+        if (isGoingToLogin ||
+            isGoingToSignup ||
+            isGoingToForgot ||
+            isGoingToVerify) {
+          return '/';
+        }
+
+        // Proceed normally
+        return null;
+      },
     );
   }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  void dispose() {
+    _authNotifier.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+    return MaterialApp.router(
+      title: 'PartyBee',
+      debugShowCheckedModeBanner: false,
+      theme: PremiumTheme.darkTheme,
+      routerConfig: _router,
     );
   }
 }
