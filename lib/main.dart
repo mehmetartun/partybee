@@ -10,6 +10,8 @@ import 'screens/signup_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/verify_email_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/planner_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,6 +62,14 @@ class _MyAppState extends State<MyApp> {
         GoRoute(
           path: '/verify-email',
           builder: (context, state) => const VerifyEmailScreen(),
+        ),
+        GoRoute(
+          path: '/dashboard',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: '/planner',
+          builder: (context, state) => const PlannerPage(),
         ),
       ],
       redirect: (context, state) {
