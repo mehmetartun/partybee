@@ -943,7 +943,7 @@ class _PlannerFormState extends State<PlannerForm> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'receiveing results',
+                    'receiving results',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
