@@ -1,3 +1,5 @@
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
@@ -19,8 +21,10 @@ void main() async {
   await GoogleSignIn.instance.initialize();
 
   // if (kDebugMode) {
-  //   final host = defaultTargetPlatform == TargetPlatform.android ? '10.0.2.2' : 'localhost';
-  //   FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+  // final host = defaultTargetPlatform == TargetPlatform.android
+  //     ? '10.0.2.2'
+  //     : 'localhost';
+  // FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
   // }
 
   runApp(const MyApp());

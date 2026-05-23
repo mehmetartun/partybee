@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -347,29 +348,37 @@ class PlannerCubit extends Cubit<PlannerState> {
   Future<void> getRecommendations() async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
-      // Setup the Firebase Cloud Function invocation code
-      // Although it's mock-only for now, this prepares the real Firebase Functions integration.
-      // final callable = FirebaseFunctions.instance.httpsCallable('get-recommendations');
-      // final results = await callable.call({'partyId': state.partyId});
-      // final imageUrl = results.data['image'] as String?;
-      // final markdownText = results.data['markdown'] as String?;
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      final partyId = state.partyId;
 
-      // For now the function is not functional.
-      // therefore wait for 5 seconds showing a spinner with "receiving results"
-      await Future.delayed(const Duration(seconds: 5));
+      if (uid == null || partyId == null) {
+        throw Exception('User ID or Party ID is missing.');
+      }
+
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'characterizeRoom',
+      );
+      final partyTypeStr = state.partyType.name;
+      final guestCount = state.guestCount;
+      final prompt =
+          "Analyze the empty room represented by these images. We are planning to host a **$partyTypeStr** party for **$guestCount** guests. "
+          "Explain how we should organize this room to best accommodate this party type and number of guests. "
+          "Assume the room is completely empty, and specify a detailed itemized list of equipment, seating, tables, audio/video systems, and lighting we should rent. "
+          "Provide the response strictly in raw markdown format without any HTML formatting or wrappers.";
+
+      final results = await callable.call({
+        'collectionPath': 'users/$uid/parties/$partyId/images',
+        // 'collectionPath':
+        //     '/users/VCmciSPxQThVCuCyYrUl9hFwCHU2/parties/5lOUJK1kxMqMieGyxcwt/images',
+        'prompt': prompt,
+      });
 
       // And then show a text saying "results are.... "
       emit(
         state.copyWith(
           isLoading: false,
           recommendationImage: 'https://picsum.photos/seed/party/800/500',
-          recommendationText:
-              '### AI Venue Recommendations\n\n'
-              'Here are your AI-generated recommendations for **${state.partyName}**:\n\n'
-              '* **Seating**: Arrange modern cocktail tables near the center stage.\n'
-              '* **Catering**: Position the buffet stations on the east side to ease movement.\n'
-              '* **Vibe**: Leverage vibrant RGB accent lights to fit the Hackathon theme.\n\n'
-              'results are.... ',
+          recommendationText: results.data['markdown'],
         ),
       );
     } catch (e) {
@@ -418,7 +427,7 @@ class PlannerCubit extends Cubit<PlannerState> {
       final fileName =
           'recommendation_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final storageRef = FirebaseStorage.instance.ref().child(
-        'users/$uid/parties/$partyId/images/$fileName',
+        'users/$uid/parties/$partyId/recommendation_images/$fileName',
       );
 
       await storageRef.putData(
