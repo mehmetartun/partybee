@@ -366,18 +366,37 @@ class PlannerCubit extends Cubit<PlannerState> {
           "Assume the room is completely empty, and specify a detailed itemized list of equipment, seating, tables, audio/video systems, and lighting we should rent. "
           "Provide the response strictly in raw markdown format without any HTML formatting or wrappers.";
 
+      final collectionPath = 'users/$uid/parties/$partyId/images';
+
       final results = await callable.call({
-        'collectionPath': 'users/$uid/parties/$partyId/images',
-        // 'collectionPath':
-        //     '/users/VCmciSPxQThVCuCyYrUl9hFwCHU2/parties/5lOUJK1kxMqMieGyxcwt/images',
+        'collectionPath': collectionPath,
         'prompt': prompt,
       });
+
+      String? firstImageDownloadUrl;
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collection(collectionPath)
+            .orderBy('timeOffsetMs')
+            .limit(1)
+            .get();
+        if (snapshot.docs.isNotEmpty) {
+          firstImageDownloadUrl =
+              snapshot.docs.first.data()['downloadUrl'] as String?;
+        }
+      } catch (e) {
+        debugPrint('Failed to fetch first image from Firestore: $e');
+      }
+
+      final recImage =
+          firstImageDownloadUrl ??
+          'https://firebasestorage.googleapis.com/v0/b/party-bee-30d70.firebasestorage.app/o/users%2FVCmciSPxQThVCuCyYrUl9hFwCHU2%2Fparties%2F5lOUJK1kxMqMieGyxcwt%2Fimages%2Fframe_4_1779494828211.png?alt=media&token=00d2f7c6-ea4d-48f6-80de-93f88df1ce62';
 
       // And then show a text saying "results are.... "
       emit(
         state.copyWith(
           isLoading: false,
-          recommendationImage: 'https://picsum.photos/seed/party/800/500',
+          recommendationImage: recImage,
           recommendationText: results.data['markdown'],
         ),
       );
