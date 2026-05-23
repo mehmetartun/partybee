@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
+import 'screens/planner/planner_page.dart';
 import 'theme.dart';
 import 'auth_notifier.dart';
 import 'screens/login_screen.dart';
@@ -11,7 +12,6 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/verify_email_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/planner_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
